@@ -1,0 +1,51 @@
+name: Deploy to Azure App Service with Environments
+
+on:
+  push:
+    branches:
+      - "feature/**"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'pull_request' && 'staging' || github.ref == 'refs/heads/main' && 'staging' || 'development' }}
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: "${{ secrets.ACR_LOGIN_SERVER }}"
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/myapp:${{ github.sha }} .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/myapp:${{ github.sha }}
+
+      - name: Deploy to App Service
+        id: deploy
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.APP_NAME }}
+          slot-name: ${{ github.event_name == 'pull_request' && 'staging' || github.ref == 'refs/heads/main' && 'staging' || 'dev' }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: "${{ secrets.ACR_LOGIN_SERVER }}/myapp:${{ github.sha }}"
+
+  swap:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build_and_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Swap Slots
+        uses: Azure/cli@v1
+        with:
+          inlineScript: |
+            az webapp deployment slot swap --resource-group myResourceGroup --name ${{ secrets.APP_NAME }} --slot staging --target-slot production
