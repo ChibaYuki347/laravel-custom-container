@@ -38,5 +38,5 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ vars.WEBAPP_NAME }}
-          slot-name: ${{ vars.SLOT_NAME }}
-          images: "${{ vars.ACR_NAME }}.azurecr.io/${{  vars.IMAGE_NAME }}:${{ github.sha }}"
+          slot-name: dev
+          images: "${{ vars.ACR_NAME }}.azurecr.io/${{ vars.IMAGE_NAME }}:${{ github.sha }}"
