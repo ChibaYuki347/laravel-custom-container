@@ -20,7 +20,6 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Staging slot
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'main'
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ vars.WEBAPP_NAME }}
