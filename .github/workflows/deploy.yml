@@ -49,6 +49,7 @@ jobs:
   deploy-to-staging:
     runs-on: ubuntu-latest
     environment: staging
+    needs: build-and-deploy-to-dev
     steps:
       - name: "Login via Azure CLI"
         uses: azure/login@v2
@@ -64,6 +65,7 @@ jobs:
   swap-to-production:
     runs-on: ubuntu-latest
     environment: production
+    needs: build-and-deploy-to-dev
     steps:
       - name: "Login via Azure CLI"
         uses: azure/login@v2
