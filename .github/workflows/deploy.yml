@@ -28,7 +28,7 @@ jobs:
       - name: Login to Azure Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ env.ACR_NAME }}.azurecr.io
+          registry: ${{ vars.ACR_NAME }}.azurecr.io
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
@@ -37,15 +37,15 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ vars.ACR_NAME }}.azurecr.io/${{ vars.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Dev slot
         if: startsWith(github.ref, 'refs/heads/feature/')
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.WEBAPP_NAME }}
+          app-name: ${{ vars.WEBAPP_NAME }}
           slot-name: "dev"
-          images: "${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          images: "${{ vars.ACR_NAME }}.azurecr.io/${{  vars.IMAGE_NAME }}:${{ github.sha }}"
   deploy-to-staging:
     runs-on: ubuntu-latest
     environment: staging
@@ -59,9 +59,9 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'main'
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.WEBAPP_NAME }}
+          app-name: ${{ vars.WEBAPP_NAME }}
           slot-name: "staging"
-          images: "${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          images: "${{ vars.ACR_NAME }}.azurecr.io/${{ vars.IMAGE_NAME }}:${{ github.sha }}"
   swap-to-production:
     runs-on: ubuntu-latest
     environment: production
@@ -73,4 +73,4 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Swap Staging and Production
         if: github.ref == 'refs/heads/main'
-        run: az webapp deployment slot swap -s ${{ env.SLOT_NAME }} -n ${{ env.WEBAPP_NAME }} -g ${{ env.RESOURCE_GROUP }}
+        run: az webapp deployment slot swap -s ${{ vars.SLOT_NAME }} -n ${{ vars.WEBAPP_NAME }} -g ${{ vars.RESOURCE_GROUP }}
